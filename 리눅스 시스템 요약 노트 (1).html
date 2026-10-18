@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>리눅스 시스템 요약 노트</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#f6f5f8;--panel:#fff;--ink:#22141f;--mute:#6b5d68;--line:#e2dde3;--side:#2c001e;--sideink:#f3e6ef;--acc:#e95420;--codebg:#f1ecf2;--hit:#fff0c2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17101a;--panel:#211626;--ink:#f1e8f0;--mute:#b3a3b0;--line:#3a2a40;--side:#10000b;--sideink:#f3e6ef;--codebg:#2f2035;--hit:#5a4a10}}
+:root[data-theme="dark"]{--bg:#17101a;--panel:#211626;--ink:#f1e8f0;--mute:#b3a3b0;--line:#3a2a40;--side:#10000b;--sideink:#f3e6ef;--codebg:#2f2035;--hit:#5a4a10}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 "Noto Sans KR",system-ui,sans-serif}
+.wrap{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+nav{background:var(--side);color:var(--sideink);padding:28px 20px;position:sticky;top:0;height:100vh;overflow:auto}
+nav h1{font-size:19px;margin:0 0 4px;line-height:1.35}
+nav p{margin:0 0 18px;font-size:13px;opacity:.7}
+nav a{display:block;color:inherit;text-decoration:none;padding:7px 10px;border-radius:6px;font-size:14.5px;border-left:3px solid transparent}
+nav a:hover,nav a.on{background:rgba(255,255,255,.09);border-left-color:var(--acc)}
+main{padding:28px clamp(16px,4vw,56px) 80px;max-width:980px;width:100%}
+#q{width:100%;padding:12px 16px;font:inherit;border:2px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);position:sticky;top:8px;z-index:5}
+#q:focus-visible{outline:3px solid var(--acc);outline-offset:1px}
+#cnt{font-size:13px;color:var(--mute);margin:6px 2px 0;min-height:20px}
+section{margin-top:44px}
+h2{font-size:26px;margin:0 0 6px;padding-bottom:8px;border-bottom:3px solid var(--acc);display:inline-block}
+h3{font-size:16.5px;margin:26px 0 8px}
+.note{margin:8px 0;max-width:68ch}
+.tw{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+td{padding:9px 14px;border-top:1px solid var(--line);vertical-align:top}
+tr:first-child td{border-top:0}
+td:first-child{white-space:nowrap;width:1%;font-family:ui-monospace,"D2Coding",Consolas,monospace;font-size:13.5px;color:var(--acc);font-weight:700}
+mark{background:var(--hit);color:inherit;border-radius:3px}
+.tip{background:var(--panel);border:1px solid var(--line);border-left:5px solid var(--acc);border-radius:8px;padding:12px 18px;margin:10px 0}
+.hide{display:none}
+#top{display:none}
+@media(max-width:820px){
+.wrap{display:block}
+nav{position:static;height:auto;padding:16px}
+nav p{display:none}
+nav div{display:flex;gap:6px;flex-wrap:wrap}
+nav a{border:1px solid rgba(255,255,255,.25);padding:4px 10px}
+td:first-child{white-space:normal;width:34%}
+}
+@media(prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<nav aria-label="목차">
+<h1>리눅스 시스템<br>요약 노트</h1>
+<p>구선애 교수 강의 02–09 정리</p>
+<div id="toc"></div>
+</nav>
+<main>
+<input id="q" type="search" placeholder="명령어나 키워드 검색 (예: cp, 하드 링크, :wq)" aria-label="검색" autocomplete="off">
+<div id="cnt" aria-live="polite"></div>
+<div id="out"></div>
+</main>
+</div>
+<script>
+var S=[
+{id:"basic",t:"명령 사용 기초",n:["프롬프트 user1@myubuntu:~$ 는 계정@호스트:현재위치 형태입니다. 일반 사용자는 $, 관리자(root)는 #, ~는 홈 디렉터리예요.","명령 형식은 명령 [옵션] [인자]. 옵션은 - 또는 --로 시작하고, 인자는 주로 파일명·디렉터리명입니다."],
+T:[["",[["date","현재 날짜·시간 출력"],["clear","화면 지우기"],["man 명령","사용법 보기 (NAME, SYNOPSIS, DESCRIPTION, SEE ALSO). q로 종료"],["passwd","비밀번호 변경"],["exit, Ctrl+d","터미널(접속) 종료"],["Ctrl+w","단어 지우기"],["Ctrl+u","문장 전체 지우기"]]]]},
+{id:"struct",t:"파일과 디렉터리 구조",n:["파일 종류는 4가지: 일반 파일, 디렉터리, 심벌릭 링크(윈도 바로가기와 비슷), 장치 파일. 디렉터리와 장치도 파일로 취급해요. 종류 확인은 file 이름.","절대 경로는 항상 /로 시작하고 어디서나 같아요. 상대 경로는 현재 디렉터리 기준이라 위치에 따라 달라지고, 상위로 가려면 ..을 씁니다. 예: /home/user1/다운로드 (절대), ../../etc/hosts (상대).","이름 규칙: /는 사용 불가, 알파벳·숫자·-·_·.만 권장, 공백과 특수문자(* | \" ' @ # $ % ^ &) 금지, 대소문자 구별, .으로 시작하면 숨김 파일."],
+T:[["기호",[["/","루트 디렉터리 (모든 디렉터리의 출발점, 트리 구조)"],[".","현재(작업) 디렉터리"],["..","상위(부모) 디렉터리"],["~","홈 디렉터리 (~user1은 user1의 홈)"],["ls -F 표시","/ 디렉터리, @ 심벌릭 링크, * 실행 파일, 없음 = 일반 파일"]]],
+["주요 디렉터리",[["dev","장치 파일"],["home","사용자 홈 디렉터리가 생성되는 곳"],["media","CD-ROM·USB 등 외부 장치 마운트"],["opt","추가 패키지 설치"],["root","root 계정의 홈 (루트 / 와 다름)"],["sys","커널 관련 파일"],["usr","기본 실행 파일, 라이브러리, 헤더 (Unix System Resource)"],["boot","부팅에 필요한 커널 파일"],["etc","리눅스 설정 파일"],["lost+found","파일 시스템 복구 시 문제 파일 저장 (보통 비어 있음)"],["mnt","파일 시스템 임시 마운트"],["proc","프로세스 등 커널 정보"],["run","실행 중인 서비스 관련 파일"],["srv","FTP, Web 등 서비스 데이터"],["tmp","임시 데이터 (재시작하면 삭제)"],["var","로그 등 자주 바뀌는 데이터"]]]]},
+{id:"dir",t:"디렉터리 명령",n:["홈으로 가는 방법은 cd /home/user1, cd ~, cd 세 가지인데, 인자 없는 cd가 가장 간단해요."],
+T:[["",[["pwd","현재 디렉터리 확인"],["cd 경로","디렉터리 이동 (절대·상대 경로 모두 가능)"],["ls","현재 디렉터리 내용"],["ls -a","숨김 파일 포함"],["ls -F","파일 종류 표시"],["ls -l","상세 정보"],["ls -d","디렉터리 자체 정보"],["ls -i","inode 번호 표시"],["dir, vdir","ls의 심벌릭 링크 (윈도 cmd와 비슷)"],["mkdir 이름","디렉터리 생성 (여러 개는 공백으로 구분)"],["mkdir -p a/b/c","중간 디렉터리까지 자동 생성"],["rmdir 이름","디렉터리 삭제. 비어 있어야만 가능"]]]]},
+{id:"file",t:"파일 명령",n:["mv는 대상에 따라 동작이 달라져요. 없는 이름이면 이름 변경, 기존 파일이면 덮어쓰기, 기존 디렉터리면 그 아래로 이동입니다. 쓰기 권한이 없는 곳에는 복사·이동이 안 돼요(허가 거부)."],
+T:[["내용 보기",[["cat [-n] 파일","전체 출력. -n은 행 번호"],["more 파일","화면 단위. Space 다음 화면, Enter 한 줄, /문자열 검색, q 종료"],["less 파일","more 개선판. j/k 한 줄, Space·Ctrl+f 다음 화면, Ctrl+b 이전 화면"],["tail 파일","마지막 10행 (기본)"],["tail -숫자 파일","마지막 N행"],["tail -f 파일","종료하지 않고 계속 출력 (Ctrl+c로 중단)"]]],
+["복사·이동·삭제",[["cp 원본 대상","파일 복사. 대상이 디렉터리면 그 안으로"],["cp -i","덮어쓰기 전에 확인"],["cp -r","디렉터리 복사 (내용 포함, 대상 없으면 새로 생성)"],["cp f1 f2 dir","여러 파일 복사. 마지막 인자는 반드시 디렉터리"],["mv 원본 대상","이동 또는 이름 변경"],["mv -i","덮어쓰기 전에 확인"],["rm 파일","삭제. 복구 불가, 신중하게"],["rm -i","삭제 전에 확인"],["rm -r 디렉터리","디렉터리와 내용 삭제"]]],
+["빈 파일·검색",[["touch 파일","없으면 빈 파일 생성, 있으면 수정 시간을 현재로 변경"],["touch -a / -m","접근 시간만 / 수정 시간만 변경"],["touch -t 시간","시간 직접 지정 [[CC]YY]MMDDhhmm[.ss]. YY 69~99는 CC=19, 00~68은 CC=20"],["grep 패턴 파일","패턴이 있는 행 찾기. -i 대소문자 무시, -l 파일명만, -n 행 번호"],["find 경로 조건 동작","-name, -type, -user, -perm 조건. 동작은 -print(기본), -ls, -exec, -ok"],["find ... -exec rm {} \\;","찾은 파일에 명령 실행. {}와 \\ 사이는 띄우고 \\;는 붙여 씀. -ok는 하나씩 확인"],["whereis 명령","바이너리 -b, 매뉴얼 -m, 소스 -s 위치 찾기"],["which 명령","PATH와 에일리어스에서 명령 위치 찾기"]]]]},
+{id:"link",t:"링크와 inode",n:["파일 = 파일명 + inode + 데이터 블록. inode에는 종류, 크기, 소유자, 변경 시간, 데이터 블록 주소가 들어 있고 ls -i로 번호를 봅니다. 이름이 달라도 inode 번호가 같으면 같은 파일이에요.","복사(cp)본은 inode가 다른 별개 파일이라 복사본을 수정해도 원본에 반영되지 않습니다."],
+T:[["하드 링크 vs 심벌릭 링크",[["ln 원본 링크","하드 링크: 같은 파일에 이름 추가. inode 같음, 링크 개수 증가, 원본을 지워도 내용 유지"],["ln -s 원본 링크","심벌릭 링크: 원본을 가리키는 별개 파일. inode 다름, 링크 개수 그대로, ls -l에서 종류 l과 링크 -> 원본 표시, 원본 삭제 시 연결 끊김"]]]]},
+{id:"vi",t:"vi 편집기",n:["vi는 모드형 편집기입니다(한글·워드는 비모드형). 시작하면 명령 모드이고, i·a·o로 입력 모드, :·/·?로 마지막 행 모드에 들어가요. 입력 모드는 Esc로 명령 모드에 돌아옵니다.","행 편집기는 ed, ex, sed, 화면 편집기는 vi, emacs입니다. 시작은 vi [파일]이고, 없는 파일이면 빈 파일이 열려요."],
+T:[["저장·종료",[[":q","변경 없을 때 종료"],[":q!","저장하지 않고 강제 종료"],[":w [파일명]","저장 (파일명을 주면 다른 이름으로)"],[":wq, ZZ","저장하고 종료"]]],
+["입력 모드 전환",[["i / I","커서 앞 / 행의 처음에서 입력"],["a / A","커서 뒤 / 행의 끝에서 입력"],["o / O","아래 / 위에 새 행을 만들어 입력"]]],
+["이동",[["h j k l, 화살표","커서 이동"],["w / b","다음 / 이전 단어"],["^ / $","행의 처음 / 끝"],["H / M / L","화면의 위 / 중간 / 아래"],["50G, :30","50행 / 30행으로 이동"],["Ctrl+u / Ctrl+d","반 화면 위 / 아래"],["Ctrl+b / Ctrl+f","한 화면 위 / 아래"],["Ctrl+y / Ctrl+e","한 행 위 / 아래"]]],
+["수정·삭제",[["r","한 글자 수정 (명령 모드 유지)"],["cw, #s","단어 수정, #글자 수정"],["C","커서부터 행 끝까지 수정"],["cc","행 전체 수정"],["x, 3x","글자 삭제"],["dw","단어 삭제"],["D","커서부터 행 끝까지 삭제"],["dd","행 삭제 (잘라내기 겸용)"],["u","명령 취소"]]],
+["복사·붙이기",[["yy, 2yy","1행 / 2행 복사"],["p / P","커서 아래(뒤) / 위(앞)에 붙이기"],["\"ayy, \"ap","네임드 버퍼 a에 저장 / 붙이기 (a~z, 숫자 버퍼 1~9). 이름 없는 버퍼는 하나만 저장"],[":1,3y / :1,3d","범위 복사 / 삭제 (범위: 1,$ 또는 %, ., 10,20)"]]],
+["검색·바꾸기",[["/문자열, ?문자열","아래로 / 위로 검색. n은 다음 결과"],[":s/like/LIKE/","현재 행의 첫 번째만 바꾸기"],[":3,4s/a/b/","3~4행 바꾸기"],[":s/a/b/g","g를 붙이면 한 행의 모두 바꾸기"],[":%s/a/b/g, :1,$s/a/b/g","파일 전체 바꾸기"]]],
+["파일·셸·기타",[[":r 파일","다른 파일을 커서 행 아래에 삽입"],[":e 파일","다른 파일 편집 (먼저 저장해야 함)"],[":n","여러 파일을 열었을 때 다음 파일로"],[":! 명령","셸 명령 한 개 실행, Enter로 복귀"],[":sh","셸로 나갔다가 exit로 복귀"],["Ctrl+l / Ctrl+g","화면 다시 그리기 / 현재 행 번호"],["J / .","아랫행 연결 / 직전 명령 반복"]]],
+["환경 설정",[[":set nu / :set nonu","행 번호 표시 / 해제 (파일에는 저장 안 됨)"],[":set list","$는 행 끝, ^I는 탭 표시"],[":set / :set all","설정값 / 전체 설정 보기"],["~/.exrc, EXINIT","설정 저장 방법 (.exrc 파일, 환경변수)"]]]]},
+{id:"shell",t:"셸",n:["셸의 기능은 명령어 해석기, 프로그래밍(셸 스크립트), 사용자 환경 설정 세 가지입니다. 로그인 셸은 /etc/passwd에 사용자별로 지정되고, 바꿀 수 있는 셸 목록은 /etc/shells에 있어요(절대 경로로 지정).","서브 셸은 프롬프트에서 실행한 다른 셸이고 exit나 Ctrl+d로 종료합니다. cd 같은 내장 명령은 별도 실행 파일이 없어요."],
+T:[["셸 종류",[["sh","본 셸. 유닉스 V7, Stephen Bourne. 단순하고 빠르지만 히스토리·에일리어스 없음"],["csh","C 셸. Bill Joy(버클리). 에일리어스·히스토리 추가, C 언어 문법. 프롬프트 %"],["ksh","콘 셸. David Korn(AT&T). 본 셸 호환 + C 셸 기능, 빠름"],["bash","배시 셸. 1988년 Brian Fox. 본 셸 기반 + C·콘 셸 기능, 리눅스 기본 셸"],["dash","대시 셸. POSIX 준수, 작은 크기. 우분투 6.10부터 사용"]]],
+["특수문자",[["*","0개 이상의 임의 문자열"],["?","임의의 한 문자"],["[ ]","괄호 안 문자 중 하나"],["~, -","내 홈 디렉터리, 직전 작업 디렉터리(cd -)"],[";","명령을 왼쪽부터 차례로 실행"],["|","파이프. 앞 명령의 출력이 뒤 명령의 입력"],["' '","모든 특수문자를 일반 문자로"],["\" \"","$, `, \\ 를 뺀 특수문자를 일반 문자로"],["` `","안의 문자열을 명령으로 실행해 결과로 대체"],["\\","바로 뒤 특수문자의 효과 제거"]]],
+["리다이렉션",[["> 파일","표준 출력을 파일로 (덮어쓰기, 없으면 생성)"],[">> 파일","파일 끝에 추가"],["< 파일","입력 리다이렉션"],["2> 파일","표준 오류를 파일로. 번호 생략 불가"],["명령 > 파일 2>&1","출력과 오류를 한 파일로"],["set -o noclobber","> 로 덮어쓰기 방지. 해제는 set +o noclobber"],["0 / 1 / 2","파일 디스크립터: 표준 입력(키보드) / 출력(모니터) / 오류(모니터)"]]],
+["변수",[["set / env","셸+환경 변수 모두 / 환경 변수만 출력"],["변수=값","셸 변수 설정 (현재 셸에서만 유효). 등호 양옆에 공백 금지"],["export 변수","환경 변수로 전환 (서브 셸에도 전달). 되돌리기는 export -n"],["echo $변수","값 출력. 주요 변수: HOME, PATH, PWD, SHELL, LANG, LOGNAME, HISTSIZE"],["unset 변수","변수 해제"]]],
+["에일리어스·히스토리",[["alias 이름='명령'","별명 설정. 인자 전달은 불가하고 함수를 써야 함"],["alias, unalias","목록 확인, 해제"],["!, ↑ 키","이전 명령 재실행 / 불러와서 수정"],["~/.bash_history","로그아웃할 때 히스토리 저장"]]],
+["프롬프트·설정 파일",[["PS1","프롬프트를 정하는 환경 변수"],["\\u \\h \\w \\W","사용자명, 호스트명, 작업 디렉터리 전체 경로, 마지막 디렉터리"],["\\t \\T \\d \\!","24시간 시각, 12시간 시각, 날짜, 히스토리 번호"],["\\[\\e[x;ym\\]","컬러. 글자 30~37, 배경 40~47, 0 기본·1 볼드·4 밑줄·5 반짝임·7 역상"],["/etc/profile","시스템 공통 설정 파일"],["~/.profile, ~/.bashrc, ~/.bash_aliases","사용자 설정 파일 (홈의 숨김 파일, 수정 후 적용해야 반영)"]]]]},
+{id:"exam",t:"시험 대비 포인트",n:[],tips:["절대 경로와 상대 경로를 구분하고 직접 써보기","cp, mv, rm, rmdir로 디렉터리를 다룰 때의 옵션(-r)과 오류 상황. rmdir은 빈 디렉터리만 지움","하드 링크와 심벌릭 링크 비교: inode, 링크 개수, 원본 삭제 시 동작","vi의 3가지 모드와 전환 키, 저장·종료 명령, :s 바꾸기의 범위와 g 옵션","리다이렉션 (>, >>, 2>, 2>&1), 셸 변수와 환경 변수(export), alias, PS1","슬라이드의 실습 1·2 (linux_ex/ch2 만들고 지우기)를 직접 따라 해보기"],T:[]}
+];
+var out=document.getElementById("out"),toc=document.getElementById("toc");
+S.forEach(function(s){
+ var a=document.createElement("a");a.href="#"+s.id;a.textContent=s.t;a.dataset.id=s.id;toc.appendChild(a);
+ var sec=document.createElement("section");sec.id=s.id;
+ var h=document.createElement("h2");h.textContent=s.t;sec.appendChild(h);
+ s.n.forEach(function(x){var p=document.createElement("p");p.className="note";p.textContent=x;sec.appendChild(p)});
+ (s.tips||[]).forEach(function(x){var d=document.createElement("div");d.className="tip";d.textContent=x;sec.appendChild(d)});
+ s.T.forEach(function(g){
+  if(g[0]){var h3=document.createElement("h3");h3.textContent=g[0];sec.appendChild(h3)}
+  var w=document.createElement("div");w.className="tw";var t=document.createElement("table");
+  g[1].forEach(function(r){var tr=document.createElement("tr");r.forEach(function(c){var td=document.createElement("td");td.textContent=c;td.dataset.o=c;tr.appendChild(td)});t.appendChild(tr)});
+  w.appendChild(t);sec.appendChild(w);
+ });
+ out.appendChild(sec);
+});
+var q=document.getElementById("q"),cnt=document.getElementById("cnt");
+function esc(s){return s.replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c]})}
+function filter(){
+ var v=q.value.trim().toLowerCase(),n=0;
+ document.querySelectorAll("tr").forEach(function(tr){
+  var txt=tr.textContent.toLowerCase(),ok=!v||txt.indexOf(v)>-1;
+  tr.classList.toggle("hide",!ok);
+  tr.querySelectorAll("td").forEach(function(td){
+   var o=td.dataset.o;
+   if(v&&ok){var i=o.toLowerCase().indexOf(v);td.innerHTML=i>-1?esc(o.slice(0,i))+"<mark>"+esc(o.slice(i,i+v.length))+"</mark>"+esc(o.slice(i+v.length)):esc(o)}else td.textContent=o;
+  });
+  if(ok&&v)n++;
+ });
+ document.querySelectorAll(".tw").forEach(function(w){w.classList.toggle("hide",!w.querySelector("tr:not(.hide)"));var h=w.previousElementSibling;if(h&&h.tagName=="H3")h.classList.toggle("hide",w.classList.contains("hide"))});
+ cnt.textContent=v?(n?n+"개 항목 찾음":"일치하는 항목이 없습니다. 다른 키워드로 검색해 보세요."):"";
+}
+q.addEventListener("input",filter);
+var links=[].slice.call(toc.querySelectorAll("a"));
+function spy(){var cur=S[0].id;S.forEach(function(s){if(document.getElementById(s.id).getBoundingClientRect().top<140)cur=s.id});links.forEach(function(a){a.classList.toggle("on",a.dataset.id==cur)})}
+addEventListener("scroll",spy,{passive:true});spy();
+</script>
+</body>
+</html>
